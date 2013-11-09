@@ -6,6 +6,7 @@ using System.Web.Mvc;
 using System.Web.Routing;
 using System.Web.Security;
 using ApsvietimoSistema.Models;
+using System.Data.SqlClient;
 
 namespace ApsvietimoSistema.Controllers
 {
@@ -28,19 +29,24 @@ namespace ApsvietimoSistema.Controllers
         {
             if (ModelState.IsValid)
             {
-                if (Membership.ValidateUser(model.UserName, model.Password))
+                if (IsValidInfo(model.UserName, model.Password))
                 {
                     FormsAuthentication.SetAuthCookie(model.UserName, model.RememberMe);
-                    if (Url.IsLocalUrl(returnUrl) && returnUrl.Length > 1 && returnUrl.StartsWith("/")
-                        && !returnUrl.StartsWith("//") && !returnUrl.StartsWith("/\\"))
-                    {
-                        return Redirect(returnUrl);
-                    }
-                    else
-                    {
-                        return RedirectToAction("Index", "Home");
-                    }
+                    return RedirectToAction("Index", "Home");
                 }
+//                if (Membership.ValidateUser(model.UserName, model.Password))
+//                {
+//                    FormsAuthentication.SetAuthCookie(model.UserName, model.RememberMe);
+//                    if (Url.IsLocalUrl(returnUrl) && returnUrl.Length > 1 && returnUrl.StartsWith("/")
+//                        && !returnUrl.StartsWith("//") && !returnUrl.StartsWith("/\\"))
+//                    {
+//                        return Redirect(returnUrl);
+//                    }
+//                    else
+//                    {
+//                        return RedirectToAction("Index", "Home");
+//                    }
+//                }
                 else
                 {
                     ModelState.AddModelError("", "The user name or password provided is incorrect.");
@@ -148,6 +154,28 @@ namespace ApsvietimoSistema.Controllers
         public ActionResult ChangePasswordSuccess()
         {
             return View();
+        }
+
+        public bool IsValidInfo(string email, string password)
+        {
+            bool isValid = false;
+            var crypto = new SimpleCrypto.PBKDF2();
+
+            using (var db = new MainDbEntities())
+            {
+                var user = db.SystemUsers.FirstOrDefault(u => u.Email == email);
+
+                if (user != null)
+                {
+                    if (user.Password == password)
+                    {
+                        isValid = true;
+                    }
+                }
+            }
+
+
+            return isValid;
         }
 
         #region Status Codes
